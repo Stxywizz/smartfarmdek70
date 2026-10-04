@@ -36,7 +36,7 @@ function limited(ip) {
 }
 
 async function gemini(system, msgs) {
-  const m = 'gemini-1.5-flash';
+  const m = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
@@ -47,7 +47,7 @@ async function gemini(system, msgs) {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      systemInstruction: { parts: [{ text: system }] },
+      system_instruction: { parts: [{ text: system }] },
       contents: msgs.map((x) => ({ role: x.role === 'assistant' ? 'model' : 'user', parts: [{ text: x.content }] })),
       generationConfig: { maxOutputTokens: 1500, temperature: 0.4 },
     }),
