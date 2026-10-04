@@ -1,6 +1,4 @@
 // Netlify Function: ผู้ช่วย AI เรื่องพืช
-// API key เก็บในตัวแปรของ Netlify (Environment variables) ไม่อยู่ในหน้าเว็บ
-
 const REFUSE = 'ผมตอบได้เฉพาะเรื่องพืชและการเกษตรครับ ลองถามเรื่องการปลูก การรดน้ำ โรคและแมลง หรือดินและปุ๋ยดูนะครับ';
 
 const SYSTEM = `คุณคือ "น้องฟาร์ม" ผู้ช่วยในเว็บแอป Smart Farm ตอบเป็นภาษาไทยเสมอ
@@ -28,7 +26,6 @@ function ctxText(c = {}) {
   return `<ข้อมูลผู้ใช้>\n${L.join('\n')}\n</ข้อมูลผู้ใช้>`;
 }
 
-// จำกัดจำนวนครั้งต่อ IP (แบบง่าย ทำงานเท่าที่เซิร์ฟเวอร์ยังไม่ถูกรีเซ็ต)
 const hits = new Map();
 function limited(ip) {
   const now = Date.now();
@@ -50,7 +47,8 @@ async function claude(system, msgs) {
 }
 
 async function gemini(system, msgs) {
-  const m = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  // ดึงชื่อรุ่นจาก Environment บน Netlify (ถ้าไม่มีจะใช้ gemini-3.5-flash เป็นค่าสำรอง)
+  const m = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
   const apiKey = process.env.GEMINI_API_KEY;
   
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
