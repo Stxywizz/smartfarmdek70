@@ -36,7 +36,7 @@ function limited(ip) {
 }
 
 async function gemini(system, msgs) {
-  const m = 'gemini-2.5-flash';
+  const m = 'gemini-1.5-flash';
   const apiKey = process.env.GEMINI_API_KEY;
   
   if (!apiKey) {
