@@ -1,4 +1,4 @@
-// Netlify Function: ผู้ช่วย AI เรื่องพืช
+// Netlify Function: ผู้ช่วย AI เรื่องพืช (ใช้ Gemini อย่างเดียว)
 const REFUSE = 'ผมตอบได้เฉพาะเรื่องพืชและการเกษตรครับ ลองถามเรื่องการปลูก การรดน้ำ โรคและแมลง หรือดินและปุ๋ยดูนะครับ';
 
 const SYSTEM = `คุณคือ "น้องฟาร์ม" ผู้ช่วยในเว็บแอป Smart Farm ตอบเป็นภาษาไทยเสมอ
@@ -35,21 +35,14 @@ function limited(ip) {
   return a.length > Number(process.env.RATE_PER_HOUR || 30);
 }
 
-async function claude(system, msgs) {
-  const r = await fetch('https://api.anthropic.com/v1/messages', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-api-key': process.env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
-    body: JSON.stringify({ model: process.env.CLAUDE_MODEL || 'claude-haiku-4-5-20251001', max_tokens: 700, system, messages: msgs }),
-  });
-  if (!r.ok) { console.error(await r.text()); throw new Error(`AI ตอบกลับผิดพลาด (${r.status})`); }
-  const d = await r.json();
-  return d.content.filter((b) => b.type === 'text').map((b) => b.text).join('');
-}
-
 async function gemini(system, msgs) {
   const m = 'gemini-2.5-flash';
   const apiKey = process.env.GEMINI_API_KEY;
   
+  if (!apiKey) {
+    throw new Error('ยังไม่ได้ตั้งค่า GEMINI_API_KEY บนเซิร์ฟเวอร์');
+  }
+
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
@@ -81,10 +74,7 @@ export default async (req, context) => {
 
   const system = SYSTEM + '\n\n' + ctxText(body.context);
   try {
-    let raw = null;
-    if (process.env.ANTHROPIC_API_KEY) raw = await claude(system, msgs);
-    else if (process.env.GEMINI_API_KEY) raw = await gemini(system, msgs);
-    if (raw === null) return j({ error: 'ยังไม่ได้ตั้งค่า API key บนเซิร์ฟเวอร์' }, 500);
+    const raw = await gemini(system, msgs);
     const t = raw.trim();
     if (!t.startsWith('[P]')) return j({ reply: REFUSE });
     return j({ reply: t.slice(3).trim() });
