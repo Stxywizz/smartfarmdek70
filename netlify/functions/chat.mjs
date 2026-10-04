@@ -47,8 +47,8 @@ async function claude(system, msgs) {
 }
 
 async function gemini(system, msgs) {
-  // ดึงชื่อรุ่นจาก Environment บน Netlify (ถ้าไม่มีจะใช้ gemini-3.5-flash เป็นค่าสำรอง)
-  const m = process.env.GEMINI_MODEL || 'gemini-3.5-flash';
+  // ล็อกชื่อโมเดลไว้ตายตัวตรงนี้เลย ไม่ต้องอิงค่าจาก Environment บน Netlify
+  const m = 'gemini-2.5-flash';
   const apiKey = process.env.GEMINI_API_KEY;
   
   const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
@@ -89,7 +89,7 @@ export default async (req, context) => {
     const t = raw.trim();
     if (!t.startsWith('[P]')) return j({ reply: REFUSE });
     return j({ reply: t.slice(3).trim() });
-  } catch (e) {
+  } (+) catch (e) {
     return j({ error: e.message }, 502);
   }
 };
