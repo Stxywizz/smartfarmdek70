@@ -23,7 +23,7 @@ function ctxText(c = {}) {
     L.push(`อากาศตอนนี้: ${num(c.t)}°C ความชื้น ${num(c.rh, 0)}% ฝนวันนี้ ${num(c.rain)} มม. ฝนสะสม 4 วัน ${num(c.rain3)} มม. ลม ${num(c.wind, 0)} กม./ชม. รังสีแสง ${num(c.rad, 0)} W/m² ET0 ${num(c.et0, 2)} มม./วัน${c.live ? '' : ' (เป็นข้อมูลตัวอย่าง ไม่ใช่ค่าจริง)'}`);
   }
   if (c.leaf && Array.isArray(c.leaf.top)) {
-    L.push(`ผลตรวจใบล่าสุด (ระบบประมาณจากภาพ): รอยดำ ${num(c.leaf.d)}% รอยขาว ${num(c.leaf.w)}% สาเหตุที่เป็นไปได้: ${c.leaf.top.slice(0, 3).map(x => `${txt(x[0], 50)} ${num(x[1], 0)}%`).join(', ')}`);
+    L.push(`ผลตรวจใบล่าสุด (ระบบประมาณจากภาพ): รอยดำ ${num(c.leaf.d)}% รอยขาว ${num(c.leaf.w)}% สาเหตุที่เป็นไปได้: ${c.leaf.top.slice(0, 3).map(x => `${txt(x[0], 50)}${num(x[1], 0)}%`).join(', ')}`);
   }
   return `<ข้อมูลผู้ใช้>\n${L.join('\n')}\n</ข้อมูลผู้ใช้>`;
 }
@@ -50,10 +50,12 @@ async function claude(system, msgs) {
 }
 
 async function gemini(system, msgs) {
-  const m = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent`, {
+  const m = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  const apiKey = process.env.GEMINI_API_KEY;
+  
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
     method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-goog-api-key': process.env.GEMINI_API_KEY },
+    headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       systemInstruction: { parts: [{ text: system }] },
       contents: msgs.map((x) => ({ role: x.role === 'assistant' ? 'model' : 'user', parts: [{ text: x.content }] })),
