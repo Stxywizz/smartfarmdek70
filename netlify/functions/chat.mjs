@@ -1,4 +1,4 @@
-// Netlify Function: ผู้ช่วย AI เรื่องพืช (ใช้ Gemini อย่างเดียว)
+// Netlify Function: ผู้ช่วย AI เรื่องพืช (ใช้ Gemini รุ่นมาตรฐาน)
 const REFUSE = 'ผมตอบได้เฉพาะเรื่องพืชและการเกษตรครับ ลองถามเรื่องการปลูก การรดน้ำ โรคและแมลง หรือดินและปุ๋ยดูนะครับ';
 
 const SYSTEM = `คุณคือ "น้องฟาร์ม" ผู้ช่วยในเว็บแอป Smart Farm ตอบเป็นภาษาไทยเสมอ
@@ -36,6 +36,7 @@ function limited(ip) {
 }
 
 async function gemini(system, msgs) {
+  // ใช้รุ่นมาตรฐานที่ปลอดภัยและรองรับการใช้งานฟรี
   const m = process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   const apiKey = process.env.GEMINI_API_KEY;
   
@@ -43,12 +44,14 @@ async function gemini(system, msgs) {
     throw new Error('ยังไม่ได้ตั้งค่า GEMINI_API_KEY บนเซิร์ฟเวอร์');
   }
 
-  const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${apiKey}`, {
+  const r = await fetch(`https://generativelanguage.googleapis.com/v1/models/${m}:generateContent?key=${apiKey}`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      system_instruction: { parts: [{ text: system }] },
-      contents: msgs.map((x) => ({ role: x.role === 'assistant' ? 'model' : 'user', parts: [{ text: x.content }] })),
+      contents: [
+        { role: 'user', parts: [{ text: `[System Instruction]\n${system}` }] },
+        ...msgs.map((x) => ({ role: x.role === 'assistant' ? 'model' : 'user', parts: [{ text: x.content }] }))
+      ],
       generationConfig: { maxOutputTokens: 1500, temperature: 0.4 },
     }),
   });
